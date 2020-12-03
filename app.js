@@ -9,6 +9,9 @@ const OUTPUT_DIR = path.resolve(__dirname, "output");
 const outputPath = path.join(OUTPUT_DIR, "team.html");
 
 const render = require("./lib/htmlRenderer");
+const { listenerCount } = require("process");
+
+const employeeList = [];
 
 // Write code to use inquirer to gather information about the development team members,
 // and to create objects for each team member (using the correct classes as blueprints!)
@@ -18,56 +21,129 @@ const render = require("./lib/htmlRenderer");
 // Intern - School
 // Manager - office number
 
-inquirer
+const addManager = async () =>{
+    inquirer
     .prompt([
         {
             type: "input",
             name: "name",
-            message: "Please enter the name:"
-        },
-        {
-            type: "list",
-            name: "position",
-            message: "Please select the position:",
-            choices: ["Manager","Engineer","Intern"]
+            message: "First, please your name:"
         },
         {
             type: "input",
             name: "email",
-            message: "Please enter the email"
+            message: "Please enter your email:"
             //validate email
         },
+        {
+            type: "input",
+            name: "officeNumber",
+            message: "Please enter your office number:"
+            
+        }
     ])
     .then((response) => {
-        // console.log("Here are the answers: " + response.position)
-        let employeeInfo = response;
-        let question = {
-            type: "input",
-            name: "info",
-            message: "placeholder message"
-        };
-        switch(response.position){
-            case "Manager":
-                question.message = "Please enter the office number:"
-                break;
-            case "Engineer":
-                question.message = "Please enter the github account username:"
-                break;
-            case "Intern":
-                question.message = "Please enter the name of the school:"
-                break;
-            default:
-                console.error("There is something wrong");
-                break;
+        let id = 1;
+        const manager = new Manager(response.name,id,response.email,response.officeNumber);
+        employeeList.push(manager);
+
+        bulldTeam();
+    });
+
+}
+
+const bulldTeam = async () => {
+    let start = true;
+    let id = 2;
+    do { 
+        
+        let response = await inquirer.prompt({
+            name: "addMember",
+            message: "Would you like to add a new team member?",
+            type: "confirm"
+        });
+        
+        if(response.addMember) {
+            await addTeamMember(id);
+            // console.log("new member with id: "+ id)
+            id++;
         }
-        inquirer
-            .prompt(question)
-            .then((answer)=>{
-                console.log(answer.info);
-                console.log(employeeInfo.name);
-                console.log(employeeInfo.name);
-            })
+        else if(!response.addMember) {
+            console.log(employeeList);
+            start = false;
+            generateHtml();
+        }
+    } while(start) 
+}
+
+const addTeamMember = async (id) => {
+    let response = await inquirer.prompt([
+            {
+                name: "name",
+                type:"input",
+                message:`Please enter the name of employee ${id-1}:`
+            },
+            {
+                name: "email",
+                type:"input",
+                message:`Please enter their email:`
+            },
+            {
+                name: "position",
+                type:"list",
+                message:`Please select their position:`,
+                choices: ["Engineer", "Intern"]
+            }
+        ]);
+        
+    if(response.position === 'Engineer'){
+        await addEngineer(response,id);
+    }
+    else{
+        await addIntern(response,id);
+    }
+}
+
+const addEngineer = async (employeeInfo,id) => {
+    let response = await inquirer.prompt({
+            name:"github",
+            message:"Please enter their Github username:",
+            type: "input"
+        });
+        
+        const employee = new Engineer(employeeInfo.name,id,employeeInfo.email,response.github);
+        employeeList.push(employee);
+}
+
+const addIntern = async (employeeInfo,id) => {
+    let response = await inquirer.prompt({
+            name:"school",
+            message:"Please enter the name of their school:",
+            type: "input"
+        })
+        .then((response)=>{
+            const employee = new Intern(employeeInfo.name,id,employeeInfo.email,response.school);
+            employeeList.push(employee);
+        })
+}
+
+const generateHtml = () => {
+    console.log('rendering');
+
+    fs.writeFile(outputPath,render(employeeList),(error) => {
+        (error) ? console.error(error) : console.log("file has been generated");
     })
+
+}
+
+const init = async () => {
+    console.log("Welcome Manager. Please answer the following questions about yourself and your team members. Afterwards, you will be provided with a webpage containing the information of your team.");
+    await addManager();
+
+}
+
+init();
+
 
 // After the user has input all employees desired, call the `render` function (required
 // above) and pass in an array containing all employee objects; the `render` function will
