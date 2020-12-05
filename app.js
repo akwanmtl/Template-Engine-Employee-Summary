@@ -12,16 +12,47 @@ const render = require("./lib/htmlRenderer");
 const { listenerCount } = require("process");
 
 const employeeList = [];
-
-// Write code to use inquirer to gather information about the development team members,
-// and to create objects for each team member (using the correct classes as blueprints!)
+const existingID = [];
 
 // Employee - Naame, ID, Email
 // Engineer - Github username
 // Intern - School
 // Manager - office number
 
-const addManager = async () =>{
+const capitalize = (value) => {
+    // capitalize between spaces
+    let capsSpace = value.toLowerCase().split(" ").map(word => {
+        return word.substring(0, 1).toUpperCase() + word.substring(1);
+    }).join(" ");
+    // capitalize between hyphens
+    let hyphenSpace = capsSpace.split("-").map(word => {
+        return word.substring(0, 1).toUpperCase() + word.substring(1);
+    }).join("-");
+
+    return hyphenSpace;
+
+}
+
+const checkId = (value) => {
+    if (existingID.includes(value)) {
+        return "ID already exists. Please enter a new ID number."
+    }
+    else{ 
+        let re = /^(\d{1,})$/;
+        let pass = value.match(re);
+        if (pass) return true;
+        else return "Please enter a valid ID number."
+    }
+}
+
+const checkEmail = (value) => {
+    let re = /^([a-z0-9]{1,}((\.|-|_)[a-z0-9]{1,})*@[a-z0-9]{1,}((\.|-)[a-z0-9]{1,})*\.[a-z]{2,3})$/;
+    let pass = value.toLowerCase().match(re);
+    if (pass) return true;
+    else return "Please enter a valid email address."
+}
+
+const addManager = () =>{
     inquirer
     .prompt([
         {
@@ -32,61 +63,84 @@ const addManager = async () =>{
         {
             type: "input",
             name: "email",
-            message: "Please enter your email:"
-            //validate email
+            message: "Please enter your email:",
+            validate: value => {
+                return checkEmail(value);
+            }
+        },
+        {
+            type: "input",
+            name: "id",
+            message: "Please enter your ID number:",
+            validate: (value) => {
+                return checkId(value);
+            }
         },
         {
             type: "input",
             name: "officeNumber",
-            message: "Please enter your office number:"
-            
+            message: "Please enter your office number:",
+            validate: (value) => {
+                let re = /^(\d{1,}-?[A-Za-z0-9]?)$/;
+                let pass = value.match(re);
+                if(pass) return true;
+                else return "Please enter a valid office number. It can have the format of 123, 1-A or 1-1."
+            }
         }
     ])
     .then((response) => {
-        let id = 1;
-        const manager = new Manager(response.name,id,response.email,response.officeNumber);
+        const manager = new Manager(capitalize(response.name),response.id,response.email.toLowerCase(),response.officeNumber);
         employeeList.push(manager);
+        existingID.push(manager.getId());
 
         bulldTeam();
     });
 
 }
 
-const bulldTeam = async () => {
-    let start = true;
-    let id = 2;
-    do { 
+const bulldTeam = () => {
+     
         
-        let response = await inquirer.prompt({
-            name: "addMember",
-            message: "Would you like to add a new team member?",
-            type: "confirm"
-        });
-        
-        if(response.addMember) {
-            await addTeamMember(id);
-            // console.log("new member with id: "+ id)
-            id++;
+    inquirer.prompt({
+        name: "addMember",
+        message: "Would you like to add a new team member?",
+        type: "list",
+        choices: ["Yes","No"]
+    })
+    .then(response =>{
+        if(response.addMember === "Yes") {
+            addTeamMember();
         }
-        else if(!response.addMember) {
+        else {
             console.log(employeeList);
-            start = false;
             generateHtml();
         }
-    } while(start) 
+    });
 }
 
-const addTeamMember = async (id) => {
-    let response = await inquirer.prompt([
+const addTeamMember = () => {
+    inquirer
+        .prompt([
             {
                 name: "name",
                 type:"input",
-                message:`Please enter the name of employee ${id-1}:`
+                message:`Please enter the name of employee:`
             },
             {
                 name: "email",
                 type:"input",
-                message:`Please enter their email:`
+                message:`Please enter their email:`,
+                validate: value => {
+                    return checkEmail(value);
+                }
+            },
+            {
+                name: "id",
+                type:"input",
+                message:`Please enter their ID number:`,
+                validate: (value) => {
+                    return checkId(value);
+                }
             },
             {
                 name: "position",
@@ -94,36 +148,51 @@ const addTeamMember = async (id) => {
                 message:`Please select their position:`,
                 choices: ["Engineer", "Intern"]
             }
-        ]);
-        
-    if(response.position === 'Engineer'){
-        await addEngineer(response,id);
-    }
-    else{
-        await addIntern(response,id);
-    }
+        ])
+        .then(response=>{
+            if(response.position === 'Engineer'){
+                addEngineer(response);
+            }
+            else{
+                addIntern(response);
+            }
+        });
+    
 }
 
-const addEngineer = async (employeeInfo,id) => {
-    let response = await inquirer.prompt({
+const addEngineer = (employeeInfo) => {
+    inquirer
+        .prompt({
             name:"github",
             message:"Please enter their Github username:",
-            type: "input"
+            type: "input",
+            validate: value =>{
+                let re = /^([0-9a-zA-Z]{1,}-*[0-9a-zA-Z]{1,})$/;
+                let pass = value.match(re);
+                if(pass && value.length <= 39) return true;
+                else return "Please enter a valide Github username."
+            }
+        })
+        .then(response => {
+            const employee = new Engineer(capitalize(employeeInfo.name),employeeInfo.id,employeeInfo.email.toLowerCase(),response.github);
+            employeeList.push(employee);
+            existingID.push(employee.getId());
+            bulldTeam();
         });
-        
-        const employee = new Engineer(employeeInfo.name,id,employeeInfo.email,response.github);
-        employeeList.push(employee);
 }
 
-const addIntern = async (employeeInfo,id) => {
-    let response = await inquirer.prompt({
+const addIntern = (employeeInfo) => {
+    inquirer
+        .prompt({
             name:"school",
             message:"Please enter the name of their school:",
             type: "input"
         })
-        .then((response)=>{
-            const employee = new Intern(employeeInfo.name,id,employeeInfo.email,response.school);
+        .then((response)=> {
+            const employee = new Intern(capitalize(employeeInfo.name),employeeInfo.id,employeeInfo.email.toLowerCase(),response.school);
             employeeList.push(employee);
+            existingID.push(employee.getId());
+            bulldTeam();
         })
 }
 
@@ -136,14 +205,16 @@ const generateHtml = () => {
 
 }
 
-const init = async () => {
+const init = () => {
     console.log("Welcome Manager. Please answer the following questions about yourself and your team members. Afterwards, you will be provided with a webpage containing the information of your team.");
-    await addManager();
+    addManager();
 
 }
 
 init();
 
+// Write code to use inquirer to gather information about the development team members,
+// and to create objects for each team member (using the correct classes as blueprints!)
 
 // After the user has input all employees desired, call the `render` function (required
 // above) and pass in an array containing all employee objects; the `render` function will
