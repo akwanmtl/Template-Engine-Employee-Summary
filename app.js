@@ -1,3 +1,4 @@
+// declare variables that requires modules and files 
 const Manager = require("./lib/Manager");
 const Engineer = require("./lib/Engineer");
 const Intern = require("./lib/Intern");
@@ -5,21 +6,27 @@ const inquirer = require("inquirer");
 const path = require("path");
 const fs = require("fs");
 
+const render = require("./lib/htmlRenderer");
+const { listenerCount } = require("process");
+
+// declare the path where the files will be created
 const OUTPUT_DIR = path.resolve(__dirname, "output");
 const outputPath = path.join(OUTPUT_DIR, "team.html");
 const outputPathStyle = path.join(OUTPUT_DIR, "style.css");
 
-const render = require("./lib/htmlRenderer");
-const { listenerCount } = require("process");
+// declare empty arrays 
+const employeeList = []; //list of employees
+const existingID = []; //iist of existing IDs
 
-const employeeList = [];
-const existingID = [];
 
-// Employee - Naame, ID, Email
-// Engineer - Github username
-// Intern - School
-// Manager - office number
+// Function that initializes the application - it will call on the addManager function
+const init = () => {
+    console.log("Welcome Manager. Please answer the following questions about yourself and your team members. Afterwards, you will be provided with a webpage containing the information of your team.");
+    addManager();
 
+}
+
+// function that capitalize the first letter of the words (in case the user did not enter names with capital letters)
 const capitalize = (value) => {
     // capitalize between spaces
     let capsSpace = value.toLowerCase().split(" ").map(word => {
@@ -31,9 +38,9 @@ const capitalize = (value) => {
     }).join("-");
 
     return hyphenSpace;
-
 }
 
+// function that checks whether the ID is not already existing and that is valid (positive integer)
 const checkId = (value) => {
     if (existingID.includes(value)) {
         return "ID already exists. Please enter a new ID number."
@@ -46,6 +53,7 @@ const checkId = (value) => {
     }
 }
 
+// function that checks whether the email is in a valid format - common format
 const checkEmail = (value) => {
     let re = /^([a-z0-9]{1,}((\.|-|_)[a-z0-9]{1,})*@[a-z0-9]{1,}((\.|-)[a-z0-9]{1,})*\.[a-z]{2,3})$/;
     let pass = value.toLowerCase().match(re);
@@ -53,6 +61,7 @@ const checkEmail = (value) => {
     else return "Please enter a valid email address."
 }
 
+// function that asks the user for their information (i.e. Manager's position)
 const addManager = () =>{
     inquirer
     .prompt([
@@ -89,6 +98,10 @@ const addManager = () =>{
             }
         }
     ])
+    // creates a Manager obj from the response
+    // pushes the Manager obj into the list of employees
+    // pushes the ID to the list of existing IDs
+    // calls on the build team function
     .then((response) => {
         const manager = new Manager(capitalize(response.name),response.id,response.email.toLowerCase(),response.officeNumber);
         employeeList.push(manager);
@@ -99,9 +112,8 @@ const addManager = () =>{
 
 }
 
-const bulldTeam = () => {
-     
-        
+// function that askes the user if they want to add team member
+const bulldTeam = () => { 
     inquirer.prompt({
         name: "addMember",
         message: "Would you like to add a new team member?",
@@ -109,16 +121,19 @@ const bulldTeam = () => {
         choices: ["Yes","No"]
     })
     .then(response =>{
+        // if yes, call the addTeamMember function
         if(response.addMember === "Yes") {
             addTeamMember();
         }
+        // if no, generate the html file
         else {
-            console.log(employeeList);
+            // console.log(employeeList);
             generateHtml();
         }
     });
 }
 
+// asks the user common questions about the employee
 const addTeamMember = () => {
     inquirer
         .prompt([
@@ -151,16 +166,18 @@ const addTeamMember = () => {
             }
         ])
         .then(response=>{
+            // if the position is engineer, calls on the addEngineer function
             if(response.position === 'Engineer'){
                 addEngineer(response);
             }
+            // if the position is intern, calls on the addIntern function
             else{
                 addIntern(response);
             }
         });
-    
 }
 
+// function that asks the user the github information of the engineer
 const addEngineer = (employeeInfo) => {
     inquirer
         .prompt({
@@ -171,9 +188,13 @@ const addEngineer = (employeeInfo) => {
                 let re = /^([0-9a-zA-Z]{1,}-*[0-9a-zA-Z]{1,})$/;
                 let pass = value.match(re);
                 if(pass && value.length <= 39) return true;
-                else return "Please enter a valide Github username."
+                else return "Please enter a valid Github username."
             }
         })
+        // creates a Engineer obj from the response
+        // pushes the Engineer obj into the list of employees
+        // pushes the ID to the list of existing IDs
+        // calls on the build team function
         .then(response => {
             const employee = new Engineer(capitalize(employeeInfo.name),employeeInfo.id,employeeInfo.email.toLowerCase(),response.github);
             employeeList.push(employee);
@@ -182,6 +203,7 @@ const addEngineer = (employeeInfo) => {
         });
 }
 
+// function that asks the user the school of the intern
 const addIntern = (employeeInfo) => {
     inquirer
         .prompt({
@@ -189,6 +211,10 @@ const addIntern = (employeeInfo) => {
             message:"Please enter the name of their school:",
             type: "input"
         })
+        // creates a Intern obj from the response
+        // pushes the Intern obj into the list of employees
+        // pushes the ID to the list of existing IDs
+        // calls on the build team function
         .then((response)=> {
             const employee = new Intern(capitalize(employeeInfo.name),employeeInfo.id,employeeInfo.email.toLowerCase(),response.school);
             employeeList.push(employee);
@@ -197,6 +223,7 @@ const addIntern = (employeeInfo) => {
         })
 }
 
+// function that generates the html file and copies the css file to the output folder
 const generateHtml = () => {
     console.log('rendering');
 
@@ -206,37 +233,7 @@ const generateHtml = () => {
     fs.copyFile('./templates/style.css', outputPathStyle, (error) => {
         (error) ? console.error(error) : console.log("stylesheet has been copied");
       });
-
-
 }
 
-const init = () => {
-    console.log("Welcome Manager. Please answer the following questions about yourself and your team members. Afterwards, you will be provided with a webpage containing the information of your team.");
-    addManager();
-
-}
-
+// runs the initialization function upon executing the file
 init();
-
-// Write code to use inquirer to gather information about the development team members,
-// and to create objects for each team member (using the correct classes as blueprints!)
-
-// After the user has input all employees desired, call the `render` function (required
-// above) and pass in an array containing all employee objects; the `render` function will
-// generate and return a block of HTML including templated divs for each employee!
-
-// After you have your html, you're now ready to create an HTML file using the HTML
-// returned from the `render` function. Now write it to a file named `team.html` in the
-// `output` folder. You can use the variable `outputPath` above target this location.
-// Hint: you may need to check if the `output` folder exists and create it if it
-// does not.
-
-// HINT: each employee type (manager, engineer, or intern) has slightly different
-// information; write your code to ask different questions via inquirer depending on
-// employee type.
-
-// HINT: make sure to build out your classes first! Remember that your Manager, Engineer,
-// and Intern classes should all extend from a class named Employee; see the directions
-// for further information. Be sure to test out each class and verify it generates an
-// object with the correct structure and methods. This structure will be crucial in order
-// for the provided `render` function to work! ```
