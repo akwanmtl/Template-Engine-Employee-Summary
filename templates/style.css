@@ -1,0 +1,38 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed&family=Rubik&family=Archivo+Black&display=swap');
+
+body{
+    background-color: #EFE8E4;
+}
+
+.team-heading {
+    background-color:#AEB6B9;
+    color: #EFE8E5;
+}
+
+h1 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 50px;
+}
+
+.employee-card {
+    margin:1%;
+    border: 0px;
+    box-shadow: 10px 10px 10px #888888;
+}
+
+.card-header {
+    background-color: #707480;
+    color: #EFE8E5;
+    text-align: center;
+    font-family: 'Rubik', sans-serif;
+}
+
+.card-body {
+    background-color: #AEB6B9;
+}
+
+.list-group-item {
+    background-color: #F5F7F9;
+    font-family: 'Roboto Condensed', sans-serif
+}
