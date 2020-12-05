@@ -39,9 +39,10 @@ There validation put into place to check whether the inputs are valid. Specifica
 You enter/choose your answers in the command line. After you finish to answer the questions, the team.html file is generated in the ./output folder. A style.css file is also copied to the ./output folder to change the styling of the html file.
 
 Click on the GIF to see a narrated version of the demo.
-[![Video of Template Engine - Employee Summary](assets/demo.gif)]() 
+[![Video of Template Engine - Employee Summary](assets/demo.gif)](https://drive.google.com/file/d/1MS3qd3aNJOyerivx-2HeB6fEwAP4tNIB/view?usp=sharing) 
 
 Here is a screenshot of the html file loaded in a browse:
+![Screenshot of output](assets/screenshot.png)
 
 ## Tests
 
