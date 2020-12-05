@@ -7,6 +7,7 @@ const fs = require("fs");
 
 const OUTPUT_DIR = path.resolve(__dirname, "output");
 const outputPath = path.join(OUTPUT_DIR, "team.html");
+const outputPathStyle = path.join(OUTPUT_DIR, "style.css");
 
 const render = require("./lib/htmlRenderer");
 const { listenerCount } = require("process");
@@ -202,6 +203,10 @@ const generateHtml = () => {
     fs.writeFile(outputPath,render(employeeList),(error) => {
         (error) ? console.error(error) : console.log("file has been generated");
     })
+    fs.copyFile('./templates/style.css', outputPathStyle, (error) => {
+        (error) ? console.error(error) : console.log("stylesheet has been copied");
+      });
+
 
 }
 
